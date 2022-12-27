@@ -1,0 +1,162 @@
+#include <iostream>
+#include <functional>
+#include <vector>
+#include <set>
+#include <cmath>
+#include <algorithm>
+#include <memory>
+
+// capture shared_ptr in lambda-> BAD!!
+// https://floating.io/2017/07/lambda-shared_ptr-memory-leak/
+
+// Nmzw oloi oi operators prepei na epistrefoun shared_ptr<Value> wste
+// na borw na parw shared_from_this() sto vector-set children
+// stis relu kai pow pou exoun children ton idio komvo.
+
+class Value: public std::enable_shared_from_this<Value> {
+  public:
+    Value (float data)
+      : _data(data), _grad(0.0f), _backward{[]() {}} {
+        std::cout << "constructor 1, data: " << _data << std::endl;
+      }
+    Value(float data, std::set<std::shared_ptr<Value>> _children, std::string _op="")
+      : _data(data), _grad(0.0f), _prev(_children), _op(_op)  {
+        std::cout << "cunstructor 2, data: " << _data << std::endl;
+      }
+    // static std::set<std::shared_ptr<Value>> visited;
+    bool visited;
+    float _data, _grad;
+    std::set<std::shared_ptr<Value>> _prev;
+    std::string _op;
+    // typedef std::function<void()> f_type;
+    // f_type _backward;
+    std::function<void()> _backward;
+
+    float data() const{
+      return _data;
+    }
+    float grad() const {
+      return _grad;
+    }
+    //__relu__ 
+    std::shared_ptr<Value> relu(){
+      auto out = std::make_shared<Value>(std::max(0.0f, _data),
+       std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="relu"); 
+      
+      out-> _backward = [out, self = shared_from_this()](){
+        self->_grad += (out->data() > 0) * out->grad();
+      };
+      return out;
+    }
+    // __pow__
+    std::shared_ptr<Value> pow(std::shared_ptr<Value> exp){
+      auto out = std::make_shared<Value>(std::pow(_data, exp->data()),
+        std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="pow");
+        
+      out->_backward = [out, self=shared_from_this(), exp](){
+       self->_grad += exp->data() * std::pow(self->data(), exp->data()-1); 
+      };
+
+      return out;
+    }
+    
+    std::vector<std::shared_ptr<Value>> build_topo(){
+      // kathe antikeimeno pou kalei tn methodo thelw na prosthetei 
+      // sto idio vector, gi auto einai static-> na to kanw member?
+      static std::vector<std::shared_ptr<Value>> topo{};
+      auto v = shared_from_this(); // at first the node that called .backward()
+      if (!v->visited){
+        // std::cout << "note visited, node: " << v->data() << std::endl;
+        v->visited = false; // mark visited
+        for(auto child : v->_prev) {
+          child->build_topo();
+        }
+        topo.push_back(v);
+      }else{
+        // std::cout << "visited" <<  std::endl;
+      }
+      return topo;
+    }    
+
+    void backward(){
+      // self is the node that called .backward()
+      auto self = shared_from_this();
+      auto topo = self->build_topo();
+      self->_grad = 1;
+      // std::cout << "topo size:" << topo.size() << std::endl;
+      for (auto it = topo.rbegin(); it!=topo.rend(); ++it){
+        (*it)->_backward();
+      }
+      // std::for_each(topo.rbegin(), topo.rend(), 
+      // [](auto node){node->_backward();});
+    }
+
+    // __repr__ 
+    friend std::ostream& operator<<(std::ostream& os, const Value& v){
+      os << "Value(data="<< v.data() << ", grad=" << v.grad() << ")"<< std::endl; 
+      return os;
+    }
+    // operator < needed just for sets
+    bool operator<(const Value& other) const{
+      if (this->data() < other.data()){
+        return true;
+      }else{
+        return false;
+      }
+    }
+};
+//__add__
+std::shared_ptr<Value> operator+(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
+  auto out = std::make_shared<Value>(self->data() + other->data(),
+    std::set<std::shared_ptr<Value>>{self, other}, "+");
+
+  out->_backward = [self, other, out](){
+    self->_grad += other->data() * out->grad();
+    other->_grad += self->data() * out->grad();
+  };
+  
+  return out;
+}
+//__add__
+std::shared_ptr<Value> operator+(std::shared_ptr<Value> self, float num){
+  auto other = std::make_shared<Value>(num);
+  auto out = self + other;
+  return out;
+}
+//__mul__
+std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
+  auto out = std::make_shared<Value>(self->data() * other->data(),
+    std::set<std::shared_ptr<Value>>{self, other}, "*");
+
+  out->_backward = [self, other, out](){
+    self->_grad += other->data() * out->grad();
+    other->_grad += self->data() * out->grad();
+  };
+  return out;
+}
+//__mul__
+std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, float num){ 
+  auto other = std::make_shared<Value>(num);
+  auto out = self * other;
+  return out;
+}
+
+int main(){
+
+  std::shared_ptr<Value> v = std::make_shared<Value>(3.0);
+  std::shared_ptr<Value> y = std::make_shared<Value>(2.0);
+  // std::shared_ptr<Value> r = v->relu();
+  // std::shared_ptr<Value> r = v->pow(y);
+  std::shared_ptr<Value> r = v * 2;
+
+  // std::shared_ptr<Value> v = std::make_shared<Value>(-1.0);
+  // std::cout << *v;
+  // std::cout << *r;
+  // std::cout << "r grad: " << (*r).grad() << std::endl;
+  // r->build_topo();
+  r->backward();
+  std::cout << "r grad: "<< (*r).grad() << std::endl;
+  std::cout << "v grad: "<< (*v).grad() << std::endl;
+  std::cout << "y grad: "<< (*y).grad() << std::endl;
+  return 0;
+}
