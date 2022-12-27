@@ -105,25 +105,31 @@ class Value: public std::enable_shared_from_this<Value> {
       }
     }
 };
-//__add__
+//__add__ Value + Value
 std::shared_ptr<Value> operator+(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   auto out = std::make_shared<Value>(self->data() + other->data(),
     std::set<std::shared_ptr<Value>>{self, other}, "+");
 
   out->_backward = [self, other, out](){
-    self->_grad += other->data() * out->grad();
-    other->_grad += self->data() * out->grad();
+    self->_grad += out->grad();
+    other->_grad += out->grad();
   };
   
   return out;
 }
-//__add__
+//__add__ Value + float
 std::shared_ptr<Value> operator+(std::shared_ptr<Value> self, float num){
   auto other = std::make_shared<Value>(num);
   auto out = self + other;
   return out;
 }
-//__mul__
+//__add__ float + Value
+std::shared_ptr<Value> operator+(float num, std::shared_ptr<Value> self){
+  auto other = std::make_shared<Value>(num);
+  auto out = self + other;
+  return out;
+}
+//__mul__ Value * Value
 std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   auto out = std::make_shared<Value>(self->data() * other->data(),
     std::set<std::shared_ptr<Value>>{self, other}, "*");
@@ -134,29 +140,23 @@ std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, std::shared_ptr<Va
   };
   return out;
 }
-//__mul__
+//__mul__ Value * float
 std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, float num){ 
   auto other = std::make_shared<Value>(num);
   auto out = self * other;
   return out;
 }
-
-int main(){
-
-  std::shared_ptr<Value> v = std::make_shared<Value>(3.0);
-  std::shared_ptr<Value> y = std::make_shared<Value>(2.0);
-  // std::shared_ptr<Value> r = v->relu();
-  // std::shared_ptr<Value> r = v->pow(y);
-  std::shared_ptr<Value> r = v * 2;
-
-  // std::shared_ptr<Value> v = std::make_shared<Value>(-1.0);
-  // std::cout << *v;
-  // std::cout << *r;
-  // std::cout << "r grad: " << (*r).grad() << std::endl;
-  // r->build_topo();
-  r->backward();
-  std::cout << "r grad: "<< (*r).grad() << std::endl;
-  std::cout << "v grad: "<< (*v).grad() << std::endl;
-  std::cout << "y grad: "<< (*y).grad() << std::endl;
-  return 0;
+//__mul__ float * Value 
+std::shared_ptr<Value> operator*(float num, std::shared_ptr<Value> self){
+  auto other = std::make_shared<Value>(num);
+  auto out = self * other;
+  return out;
+}
+//__neg__
+std::shared_ptr<Value> operator-(std::shared_ptr<Value> self){
+  return self * std::make_shared<Value>(-1.0);
+}
+//__sub__
+std::shared_ptr<Value> operator-(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
+  return self + (-other); 
 }

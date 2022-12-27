@@ -3,23 +3,23 @@
 #include <set>
 #include <vector>
 
-// int main(){
+int main(){
   
-//   std::shared_ptr<Value> v = std::make_shared<Value>(3.0);
-//   std::shared_ptr<Value> y = std::make_shared<Value>(2.0);
-//   // std::shared_ptr<Value> r = v->relu();
-//   // std::shared_ptr<Value> r = v->pow(y);
-//   std::shared_ptr<Value> r = v * 2;
+  std::shared_ptr<Value> v = std::make_shared<Value>(3.0);
+  std::shared_ptr<Value> y = std::make_shared<Value>(2.0);
+  // std::shared_ptr<Value> r = v->relu();
+  // std::shared_ptr<Value> r = v->pow(y);
+  std::shared_ptr<Value> r = 2*(v) * (y) + 2;
 
-//   // std::shared_ptr<Value> v = std::make_shared<Value>(-1.0);
-//   // std::cout << *v;
-//   // std::cout << *r;
-//   // std::cout << "r grad: " << (*r).grad() << std::endl;
-//   // r->build_topo();
-//   r->backward();
-//   std::cout << "r grad: "<< (*r).grad() << std::endl;
-//   std::cout << "v grad: "<< (*v).grad() << std::endl;
-//   std::cout << "y grad: "<< (*y).grad() << std::endl;
+  // std::shared_ptr<Value> v = std::make_shared<Value>(-1.0);
+  // std::cout << *v;
+  // std::cout << *r;
+  // std::cout << "r grad: " << (*r).grad() << std::endl;
+  // r->build_topo();
+  r->backward();
+  std::cout << "r grad: "<< (*r).grad() << std::endl;
+  std::cout << "v grad: "<< (*v).grad() << std::endl;
+  std::cout << "y grad: "<< (*y).grad() << std::endl;
 
-//   return 0;
-// }
+  return 0;
+}
