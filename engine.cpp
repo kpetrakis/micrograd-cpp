@@ -13,6 +13,7 @@
 // na borw na parw shared_from_this() sto vector-set children
 // stis relu kai pow pou exoun children ton idio komvo.
 
+// stores a single scalar value and its gradient
 class Value: public std::enable_shared_from_this<Value> {
   public:
     Value (float data)
@@ -48,13 +49,14 @@ class Value: public std::enable_shared_from_this<Value> {
       };
       return out;
     }
+    
     // __pow__
-    std::shared_ptr<Value> pow(std::shared_ptr<Value> exp){
-      auto out = std::make_shared<Value>(std::pow(_data, exp->data()),
+    std::shared_ptr<Value> pow(std::shared_ptr<Value> other){
+      auto out = std::make_shared<Value>(std::pow(_data, other->data()),
         std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="pow");
         
-      out->_backward = [out, self=shared_from_this(), exp](){
-       self->_grad += exp->data() * std::pow(self->data(), exp->data()-1) * out->_grad; 
+      out->_backward = [out, self=shared_from_this(), other](){
+       self->_grad += other->data() * std::pow(self->data(), other->data()-1) * out->_grad; 
       };
 
       return out;
@@ -111,6 +113,7 @@ class Value: public std::enable_shared_from_this<Value> {
       }
     }
 };
+
 //__add__ Value + Value
 std::shared_ptr<Value> operator+(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   auto out = std::make_shared<Value>(self->data() + other->data(),
@@ -135,6 +138,7 @@ std::shared_ptr<Value> operator+(float num, std::shared_ptr<Value> self){
   auto out = self + other;
   return out;
 }
+
 //__mul__ Value * Value
 std::shared_ptr<Value> operator*(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   auto out = std::make_shared<Value>(self->data() * other->data(),
@@ -158,14 +162,27 @@ std::shared_ptr<Value> operator*(float num, std::shared_ptr<Value> self){
   auto out = self * other;
   return out;
 }
+
 //__neg__
 std::shared_ptr<Value> operator-(std::shared_ptr<Value> self){
-  return self * std::make_shared<Value>(-1.0);
+  return self * (-1.0); //std::make_shared<Value>(-1.0);
 }
-//__sub__
+
+//__sub__ Value - Value
 std::shared_ptr<Value> operator-(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   return self + (-other); 
 }
+//__sub__ Value - float
+std::shared_ptr<Value> operator-(std::shared_ptr<Value> self, float num){
+  auto other = std::make_shared<Value>(num);
+  return self + (-other); 
+}
+//__sub__ float - Value
+std::shared_ptr<Value> operator-(float num, std::shared_ptr<Value> self){
+  auto other = std::make_shared<Value>(num);
+  return other + (-self); 
+}
+
 //__truediv__ Value / Value
 std::shared_ptr<Value> operator/(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   return self * (other->pow(-1.0));

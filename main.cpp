@@ -9,7 +9,7 @@ int main(){
   std::shared_ptr<Value> y = std::make_shared<Value>(2.0);
   // std::shared_ptr<Value> r = v->relu();
   // std::shared_ptr<Value> r = v->pow(y);
-  std::shared_ptr<Value> r = 2*(v) - (3*y) + 2;
+  std::shared_ptr<Value> r = 2*(2-v) + 2*(-y) + 2;
   // std::shared_ptr<Value> r = v->pow(2);
   // std::shared_ptr<Value> r = v/y;
 
