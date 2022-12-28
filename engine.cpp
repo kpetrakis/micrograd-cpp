@@ -54,10 +54,16 @@ class Value: public std::enable_shared_from_this<Value> {
         std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="pow");
         
       out->_backward = [out, self=shared_from_this(), exp](){
-       self->_grad += exp->data() * std::pow(self->data(), exp->data()-1); 
+       self->_grad += exp->data() * std::pow(self->data(), exp->data()-1) * out->_grad; 
       };
 
       return out;
+    }
+    //__pow__
+    std::shared_ptr<Value> pow(float exp){
+      auto self = shared_from_this();
+      auto other = std::make_shared<Value>(exp);
+      return self->pow(other);
     }
     
     std::vector<std::shared_ptr<Value>> build_topo(){
@@ -159,4 +165,18 @@ std::shared_ptr<Value> operator-(std::shared_ptr<Value> self){
 //__sub__
 std::shared_ptr<Value> operator-(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
   return self + (-other); 
+}
+//__truediv__ Value / Value
+std::shared_ptr<Value> operator/(std::shared_ptr<Value> self, std::shared_ptr<Value> other){
+  return self * (other->pow(-1.0));
+}
+//__truediv__ Value / float
+std::shared_ptr<Value> operator/(std::shared_ptr<Value> self, float num){
+  auto other = std::make_shared<Value>(num);
+  return self / other;
+}
+//__truediv__ float / Value
+std::shared_ptr<Value> operator/(float num, std::shared_ptr<Value> self){
+  auto other = std::make_shared<Value>(num);
+  return other / self;
 }
