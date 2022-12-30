@@ -25,7 +25,7 @@ class Value: public std::enable_shared_from_this<Value> {
         std::cout << "cunstructor 2, data: " << _data << std::endl;
       }
     // static std::set<std::shared_ptr<Value>> visited;
-    bool visited;
+    bool visited = false;
     float _data, _grad;
     std::set<std::shared_ptr<Value>> _prev;
     std::string _op;
@@ -44,19 +44,19 @@ class Value: public std::enable_shared_from_this<Value> {
       auto out = std::make_shared<Value>(std::max(0.0f, _data),
        std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="relu"); 
       
-      out-> _backward = [out, self = shared_from_this()](){
+      out->_backward = [out, self = shared_from_this()](){
         self->_grad += (out->data() > 0) * out->grad();
       };
       return out;
     }
-    
+
     // __pow__
     std::shared_ptr<Value> pow(std::shared_ptr<Value> other){
       auto out = std::make_shared<Value>(std::pow(_data, other->data()),
         std::set<std::shared_ptr<Value>>{shared_from_this()}, _op="pow");
         
       out->_backward = [out, self=shared_from_this(), other](){
-       self->_grad += other->data() * std::pow(self->data(), other->data()-1) * out->_grad; 
+        self->_grad += other->data() * std::pow(self->data(), other->data()-1) * out->_grad; 
       };
 
       return out;
@@ -74,14 +74,15 @@ class Value: public std::enable_shared_from_this<Value> {
       static std::vector<std::shared_ptr<Value>> topo{};
       auto v = shared_from_this(); // at first the node that called .backward()
       if (!v->visited){
-        // std::cout << "note visited, node: " << v->data() << std::endl;
-        v->visited = false; // mark visited
+        std::cout << "not visited, node: " << v->data() << std::endl;
+        v->visited = true; // mark visited
         for(auto child : v->_prev) {
           child->build_topo();
         }
+        std::cout << "pushing node " << v->data() << " in topo "<< std::endl;
         topo.push_back(v);
       }else{
-        // std::cout << "visited" <<  std::endl;
+        std::cout << "visited, node: " << v->data() <<  std::endl;
       }
       return topo;
     }    
@@ -93,6 +94,7 @@ class Value: public std::enable_shared_from_this<Value> {
       self->_grad = 1;
       // std::cout << "topo size:" << topo.size() << std::endl;
       for (auto it = topo.rbegin(); it!=topo.rend(); ++it){
+        // std::cout << "grad in backward data("<< (*it)->data()<< "): " << (*it)->grad() << std::endl;
         (*it)->_backward();
       }
       // std::for_each(topo.rbegin(), topo.rend(), 
