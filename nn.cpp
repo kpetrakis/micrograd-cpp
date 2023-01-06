@@ -84,7 +84,7 @@ class Neuron: public Module{
     friend std::ostream& operator<<(std::ostream& os, const Neuron& n){
       std::string act = "Linear";
       if (n._nonlin) { act = "ReLU";}
-      os << act << " Neuron(" << n._w.size() << ")";// << std::endl; 
+      os << act << " Neuron(" << n._w.size() << ")" << std::endl; 
       return os;
     }
 };
@@ -134,6 +134,56 @@ class Layer :public Module{
       }
       str = str.substr(0, str.size() - 2);
       str += "]";
+      os << str <<std::endl;
+      return os;
+    }
+
+};
+
+class MLP: public Module{
+  /**
+   * nin : dimensionality of input
+   * nouts : list with number of neurons per layer
+  */
+  public:
+    MLP(size_t nin, std::vector<size_t> nouts){
+      auto sz = nouts;
+      sz.insert(sz.begin(), nin); // insert nin at the beginning
+      for (size_t i=0; i<nouts.size(); i++){
+        _layers.emplace_back(sz[i], sz[i+1], i!= (nouts.size() - 1));
+      }
+    }
+    std::vector<Layer> _layers;
+
+    //__call__
+    std::vector<std::shared_ptr<Value>> operator()(std::vector<std::shared_ptr<Value>> x){
+      for (auto layer: _layers){
+        x = layer(x); // forward pass
+      }
+      return x; // the output of the MLP
+    }
+
+    // MLP parameters
+    std::vector<std::shared_ptr<Value>> parameters(){
+    std::vector<std::shared_ptr<Value>> mlp_params;
+    for (auto layer: _layers){
+      for (auto param : layer.parameters()){
+        mlp_params.push_back(param);
+        }
+      }
+      return mlp_params;
+    }
+
+    //__repr__
+    friend std::ostream& operator<<(std::ostream& os, const MLP& mlp){
+      std::string str = "MLP of [";
+      for (auto& layer: mlp._layers){
+        std::stringstream ss;
+        ss << layer;
+        str += ss.str() + ", ";
+      }
+      str = str.substr(0, str.size() - 2);
+      str += "]";
       os << str;
       return os;
     }
@@ -143,10 +193,10 @@ class Layer :public Module{
 int main(){
 
   std::shared_ptr<Value> a = std::make_shared<Value>(1.0);
-  std::shared_ptr<Value> b = std::make_shared<Value>(1.0);
+  std::shared_ptr<Value> b = std::make_shared<Value>(-3.0);
   std::shared_ptr<Value> c = std::make_shared<Value>(1.0);
-  std::shared_ptr<Value> d = std::make_shared<Value>(1.0);
-  std::shared_ptr<Value> e = std::make_shared<Value>(1.0);
+  std::shared_ptr<Value> d = std::make_shared<Value>(2.0);
+  std::shared_ptr<Value> e = std::make_shared<Value>(5.0);
   std::vector<std::shared_ptr<Value>> x;
   x.push_back(a);
   x.push_back(b);
@@ -166,13 +216,13 @@ int main(){
   // std::shared_ptr<Value> res = neuron(x);
   // std::cout << "result: " << *res << std::endl;
 
-  Layer l = Layer(5,10);
-  std::cout << l << std::endl;
+  // Layer l = Layer(5,10);
+  // std::cout << l << std::endl;
   std::vector<std::shared_ptr<Value>> res;
-  res = l(x);
-  for (auto neuron_res: res){
-    std::cout << *neuron_res << std::endl;
-  }
+  // res = l(x);
+  // for (auto neuron_res: res){
+  //   std::cout << *neuron_res << std::endl;
+  // }
   // for (auto param: l.parameters()){
   //   std::cout << *param <<std::endl;
   // }
@@ -182,6 +232,15 @@ int main(){
   //     std::cout << *param<< std::endl;
   //   }
   // }
+
+  // an MLP with 2 hidden layers 16 neuros each and 1 output neuron
+  MLP mlp = MLP(5, {16,16,1});
+  std::cout << mlp << std::endl;
+  for (auto param: mlp.parameters()){
+    std::cout << *param <<std::endl;
+  }
+  res = mlp(x); 
+  std::cout << "MLP out: " <<*res[0] << std::endl; // 1 outpu neuron
 
   return 0;
 }
