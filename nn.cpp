@@ -34,12 +34,11 @@ class Module{
     virtual std::vector<std::shared_ptr<Value>> parameters(){
       return {};
     }
-
 };
 
 class Neuron: public Module{
   public:
-    Neuron(int nin, bool nonlin=true){
+    Neuron(size_t nin, bool nonlin=true){
       RandomGenerator rng = RandomGenerator();
       // init weights with random uniform values in [-1, 1]
       for(int i=0; i<nin; i++){
@@ -96,7 +95,7 @@ class Layer :public Module{
    * nout : the number of neurons in the Layer
   */
   public:
-    Layer(int nin, int nout, bool nonlin=true){
+    Layer(size_t nin, size_t nout, bool nonlin=true){
       for (int i=0; i<nout; i++){
         _neurons.emplace_back(nin, nonlin);
       }
