@@ -4,6 +4,7 @@
 #include <random>
 #include <cassert>
 #include <numeric> 
+#include <sstream>
 
 // help class to imitate random.uniform()
 class RandomGenerator{
@@ -51,7 +52,8 @@ class Neuron: public Module{
     std::vector<std::shared_ptr<Value>> _w;
     std::shared_ptr<Value> _b;
     bool _nonlin;
-
+    
+    //__call__
     std::shared_ptr<Value> operator()(std::vector<std::shared_ptr<Value>> x){
 
       assert((void("w and x dimensions don't fit"),_w.size() == x.size())); 
@@ -72,8 +74,9 @@ class Neuron: public Module{
     }    
 
 
-    // all parameters = [weights + bias]
+    // neuron parameters = [weights + bias]
     std::vector<std::shared_ptr<Value>> parameters(){
+    //  std::vector<std::shared_ptr<Value>> 
       auto parameters = _w; // copy assignement??
       parameters.push_back(_b);
       return parameters;
@@ -82,7 +85,57 @@ class Neuron: public Module{
     friend std::ostream& operator<<(std::ostream& os, const Neuron& n){
       std::string act = "Linear";
       if (n._nonlin) { act = "ReLU";}
-      os << act << " Neuron(" << n._w.size() << ")"<< std::endl; 
+      os << act << " Neuron(" << n._w.size() << ")";// << std::endl; 
+      return os;
+    }
+};
+
+class Layer :public Module{
+  /**
+   * nin : the num of inputs for each neuron
+   * nout : the number of neurons in the Layer
+  */
+  public:
+    Layer(int nin, int nout, bool nonlin=true){
+      for (int i=0; i<nout; i++){
+        _neurons.emplace_back(nin, nonlin);
+      }
+    }
+    std::vector<Neuron> _neurons;
+    
+    //__call__
+    std::vector<std::shared_ptr<Value>> operator()(std::vector<std::shared_ptr<Value>> x){
+      // i just check the first neuron because all of the will have the same nin
+      assert((void("Dimension don't fit"), _neurons[0]._w.size()==x.size()));
+
+      std::vector<std::shared_ptr<Value>> out;
+      for (auto neuron: _neurons){
+        out.emplace_back(neuron(x));
+      }
+      return out;
+    }
+
+    // layer parameters
+    std::vector<std::shared_ptr<Value>> parameters(){
+      std::vector<std::shared_ptr<Value>> layer_params; // all layer params
+      for (auto neuron: _neurons){
+        for (auto neuron_param: neuron.parameters()){
+          layer_params.push_back(neuron_param);
+        }
+      }
+      return layer_params;
+    }
+    //__repr__
+    friend std::ostream& operator<<(std::ostream& os, const Layer& l){
+      std::string str = "Layer of [";
+      for (auto& n: l._neurons){
+        std::stringstream ss;
+        ss << n;
+        str += ss.str() + ", ";
+      }
+      str = str.substr(0, str.size() - 2);
+      str += "]";
+      os << str;
       return os;
     }
 
@@ -91,9 +144,9 @@ class Neuron: public Module{
 int main(){
 
   std::shared_ptr<Value> a = std::make_shared<Value>(1.0);
-  std::shared_ptr<Value> b = std::make_shared<Value>(3.0);
-  std::shared_ptr<Value> c = std::make_shared<Value>(-3.0);
-  std::shared_ptr<Value> d = std::make_shared<Value>(2.0);
+  std::shared_ptr<Value> b = std::make_shared<Value>(1.0);
+  std::shared_ptr<Value> c = std::make_shared<Value>(1.0);
+  std::shared_ptr<Value> d = std::make_shared<Value>(1.0);
   std::shared_ptr<Value> e = std::make_shared<Value>(1.0);
   std::vector<std::shared_ptr<Value>> x;
   x.push_back(a);
@@ -102,17 +155,34 @@ int main(){
   x.push_back(d);
   x.push_back(e);
 
-  Neuron neuron = Neuron(5);
-  std::cout << neuron << std::endl;
-  for (auto weight: neuron._w){
-    std::cout << *weight << std::endl;
-  }
+  // Neuron neuron = Neuron(5);
+  // std::cout << neuron << std::endl;
+  // for (auto weight: neuron._w){
+  //   std::cout << *weight << std::endl;
+  // }
   // for (auto param: neuron.parameters()){
   //   std::cout << *param << std::endl;
   // }
 
-  std::shared_ptr<Value> res = neuron(x);
-  std::cout << "result: " << *res << std::endl;
+  // std::shared_ptr<Value> res = neuron(x);
+  // std::cout << "result: " << *res << std::endl;
+
+  Layer l = Layer(5,10);
+  std::cout << l << std::endl;
+  std::vector<std::shared_ptr<Value>> res;
+  res = l(x);
+  for (auto neuron_res: res){
+    std::cout << *neuron_res << std::endl;
+  }
+  // for (auto param: l.parameters()){
+  //   std::cout << *param <<std::endl;
+  // }
+  // for (auto n: l._neurons){
+  //   std::cout << " Neuron params:"<< std::endl;
+  //   for (auto param : n.parameters()){
+  //     std::cout << *param<< std::endl;
+  //   }
+  // }
 
   return 0;
 }
