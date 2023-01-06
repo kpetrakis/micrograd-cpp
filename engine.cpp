@@ -18,11 +18,11 @@ class Value: public std::enable_shared_from_this<Value> {
   public:
     Value (float data)
       : _data(data), _grad(0.0f), _backward{[]() {}} {
-        std::cout << "constructor 1, data: " << _data << std::endl;
+        // std::cout << "constructor 1, data: " << _data << std::endl;
       }
     Value(float data, std::set<std::shared_ptr<Value>> _children, std::string _op="")
       : _data(data), _grad(0.0f), _prev(_children), _op(_op)  {
-        std::cout << "cunstructor 2, data: " << _data << std::endl;
+        // std::cout << "cunstructor 2, data: " << _data << std::endl;
       }
     // static std::set<std::shared_ptr<Value>> visited;
     bool visited = false;
