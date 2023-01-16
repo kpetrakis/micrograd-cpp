@@ -74,15 +74,15 @@ class Value: public std::enable_shared_from_this<Value> {
       static std::vector<std::shared_ptr<Value>> topo{};
       auto v = shared_from_this(); // at first the node that called .backward()
       if (!v->visited){
-        std::cout << "not visited, node: " << v->data() << std::endl;
+        //std::cout << "not visited, node: " << v->data() << std::endl;
         v->visited = true; // mark visited
         for(auto child : v->_prev) {
           child->build_topo();
         }
-        std::cout << "pushing node " << v->data() << " in topo "<< std::endl;
+        //std::cout << "pushing node " << v->data() << " in topo "<< std::endl;
         topo.push_back(v);
       }else{
-        std::cout << "visited, node: " << v->data() <<  std::endl;
+        //std::cout << "visited, node: " << v->data() <<  std::endl;
       }
       return topo;
     }    

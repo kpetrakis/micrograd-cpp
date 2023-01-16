@@ -229,8 +229,8 @@ int main(){
   // for (auto n: l._neurons){
   //   std::cout << " Neuron params:"<< std::endl;
   //   for (auto param : n.parameters()){
-  //     std::cout << *param<< std::endl;
   //   }
+  //     std::cout << *param<< std::endl;
   // }
 
   // an MLP with 2 hidden layers 16 neuros each and 1 output neuron
@@ -241,6 +241,6 @@ int main(){
   }
   res = mlp(x); 
   std::cout << "MLP out: " <<*res[0] << std::endl; // 1 outpu neuron
-
+  
   return 0;
 }
