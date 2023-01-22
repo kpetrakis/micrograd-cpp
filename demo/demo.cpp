@@ -39,15 +39,15 @@ vector2d forward(MLP& model, vector2d& inputs){
   /**
    * implements the forward pass through network.
   */
-  vector2d outputs; // keep dimensionality of the input - torch like
+  vector2d scores; // keep dimensionality of the input - torch like
   for (auto input: inputs){
-    outputs.emplace_back(model(input));
+    scores.emplace_back(model(input));
   }
 
-  return outputs;
+  return scores;
 }
 
-void loss(){
+void loss(vector2d scores, std::vector<std::shared_ptr<Value>> y, vector2d& parameters){
   /**
    * implement the backward pass through the network..
   */
