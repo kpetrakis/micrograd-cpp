@@ -12,6 +12,11 @@ const uint n_features = 2;
 std::tuple<
   std::array<std::array<float,n_features>, n_samples>, 
   std::array<float, n_samples>> read_data(std::string data_file, std::string label_file){
+    /**
+     * data_file: the path to the file containing the make_moons data
+     * label_file : the path to the file containing the make_moons labels
+     * It reads those 2 files on 2 arrays x and y respectively and returns a tuple with them.
+    */
 
   float * x_memblock, *y_memblock;
   std::array<std::array <float, n_features>, n_samples> x;
