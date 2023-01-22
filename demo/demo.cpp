@@ -1,5 +1,8 @@
 #include <iostream>
 #include "read.cpp"
+#include <vector>
+#include <array>
+#include "../nn.cpp"
 
 /**
  * Implement a micrograd demo, showing an MLP learning the make_moons dataset
@@ -8,6 +11,8 @@
 typedef std::tuple<
   std::vector<std::vector<std::shared_ptr<Value>>>, 
   std::vector<std::shared_ptr<Value>>> dataset_t; //can't use arrays cause it seg faults!
+
+typedef std::vector<std::vector<std::shared_ptr<Value>>> vector2d;
 
 dataset_t make_dataset(std::string data_file, std::string label_file){
   /**
@@ -30,10 +35,16 @@ dataset_t make_dataset(std::string data_file, std::string label_file){
 } 
 
 
-void forward(){
+vector2d forward(MLP& model, vector2d& inputs){
   /**
    * implements the forward pass through network.
   */
+  vector2d outputs; // keep dimensionality of the input - torch like
+  for (auto input: inputs){
+    outputs.emplace_back(model(input));
+  }
+
+  return outputs;
 }
 
 void loss(){
@@ -55,10 +66,17 @@ int main(){
   // x = std::get<0>(dataset);
   // y = std::get<1>(dataset);
   auto [x, y] = make_dataset("dataset/data", "dataset/labels");
+  MLP model = MLP(2,{16,16,1});
+  auto outputs = forward(model, x);
+  for (auto item_vector: outputs){
+    for (auto item : item_vector){
+      std::cout << *item << std::endl;
+    }
+  }
+  // std::cout << model << std::endl;
+  // std::cout << *(x[1][0]) << std::endl;
 
-  std::cout << *(x[1][0]) << std::endl;
-
-  std::cout << y.size() << std::endl;
+  // std::cout << y.size() << std::endl;
   // std::cout << *y[1] << std::endl;
   return 0;
 }
