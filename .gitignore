@@ -1,11 +1,11 @@
-a.out
-demo/a.out
 .vscode/
+dataset/
+demo/demo
+demo/a.out
+test/more_ops
+test/sanity_check
+a.out
 first_try.cpp
 second_try.cpp
 lambda.cpp
 notes
-test/more_ops
-test/sanity_check
-dataset/
-demo/demo

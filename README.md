@@ -9,4 +9,8 @@ I try to implement karpathy's micrograd in C++ for practice!
 
 - I HAVE TO IMPLEMENT +=, *+ !!!
 
+- For the MLP training 
+	- Add L2 regularization in model parameters. 
+	- Add batch functionality. 
+
  
