@@ -68,21 +68,20 @@ class Value: public std::enable_shared_from_this<Value> {
       return self->pow(other);
     }
     
-    std::vector<std::shared_ptr<Value>> build_topo(){
-      // kathe antikeimeno pou kalei tn methodo thelw na prosthetei 
-      // sto idio vector, gi auto einai static-> na to kanw member?
-      static std::vector<std::shared_ptr<Value>> topo{};
+    std::vector<std::shared_ptr<Value>> build_topo(std::vector<std::shared_ptr<Value>>& topo){
+      // vector topo is empty every time i call backward()
+      // it gets populated each time the graph is constructed
       auto v = shared_from_this(); // at first the node that called .backward()
       if (!v->visited){
-        //std::cout << "not visited, node: " << v->data() << std::endl;
+        // std::cout << "not visited, node: " << *v << std::endl;
         v->visited = true; // mark visited
         for(auto child : v->_prev) {
-          child->build_topo();
+          child->build_topo(topo);
         }
-        //std::cout << "pushing node " << v->data() << " in topo "<< std::endl;
+        // std::cout << "pushing node " << *v << " in topo "<< std::endl;
         topo.push_back(v);
       }else{
-        //std::cout << "visited, node: " << v->data() <<  std::endl;
+        // std::cout << "visited, node: " << *v <<  std::endl;
       }
       return topo;
     }    
@@ -90,10 +89,11 @@ class Value: public std::enable_shared_from_this<Value> {
     void backward(){
       // self is the node that called .backward()
       auto self = shared_from_this();
-      auto topo = self->build_topo();
+      std::vector<std::shared_ptr<Value>> topo{}; // local variable to get populated each time i run backward  
+      auto topo_order = self->build_topo(topo); // topological order all of the children in the graph
       self->_grad = 1;
       // std::cout << "topo size:" << topo.size() << std::endl;
-      for (auto it = topo.rbegin(); it!=topo.rend(); ++it){
+      for (auto it = topo_order.rbegin(); it!=topo_order.rend(); ++it){ // in reverse order
         // std::cout << "grad in backward data("<< (*it)->data()<< "): " << (*it)->grad() << std::endl;
         (*it)->_backward();
       }

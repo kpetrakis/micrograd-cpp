@@ -76,9 +76,9 @@ class Neuron: public Module{
     // neuron parameters = [weights + bias]
     std::vector<std::shared_ptr<Value>> parameters(){
     //  std::vector<std::shared_ptr<Value>> 
-      auto parameters = _w; // copy assignement??
-      parameters.push_back(_b);
-      return parameters;
+      auto neuron_parameters = _w; // copy assignement??
+      neuron_parameters.push_back(_b);
+      return neuron_parameters;
     }
     // __repr__
     friend std::ostream& operator<<(std::ostream& os, const Neuron& n){
@@ -234,13 +234,52 @@ class MLP: public Module{
 //   // }
 
 //   // an MLP with 2 hidden layers 16 neuros each and 1 output neuron
-//   MLP mlp = MLP(5, {16,16,1});
-//   std::cout << mlp << std::endl;
-//   for (auto param: mlp.parameters()){
-//     std::cout << *param <<std::endl;
+//   MLP mlp = MLP(5, {2,1});
+//   // std::cout << mlp << std::endl;
+//   // for (auto param: mlp.parameters()){V
+//   //   std::cout << *param <<std::endl;
+//   // }
+//   for(int k=0;k<20;k++){
+  
+//   for (auto x_i: x){
+//     x_i->_grad = 0.0; // zero input grad too
 //   }
 //   res = mlp(x); 
-//   std::cout << "MLP out: " <<*res[0] << std::endl; // 1 outpu neuron
-  
+//   std::vector<std::shared_ptr<Value>> y;
+//   // y.emplace_back(std::make_shared<Value>(1.0));
+//   std::cout << "MLP out: " << *res[0] << std::endl; // 1 output neuron
+//   auto loss =  3.0 - res[0] ; //res[0] *y[0]; 
+//   // std::cout << "Loss: "<< *loss << std::endl;
+//   mlp.zero_grad();
+//   // std::cout << "Before backaward Loss grad:" << loss->grad() << std::endl;
+//   // std::cout << "After zero grad" <<std::endl;
+//   // for (auto param: mlp.parameters()){
+//     // std::cout << *param <<std::endl;
+//   // }
+//   // std::cout << "----------------------------------" << std::endl;
+//   loss->backward(); 
+//   // std::cout << "After backaward Loss grad:" << loss->grad() << std::endl;
+//   for (auto p : mlp.parameters()){
+//     // std::cout << p->grad() << std::endl;
+//     p->_data -= 1e-3 * p->grad();
+//   }
+//   if (k % 1 == 0){
+//     std::cout << "Step: " << k << " loss: " << loss->data() << std::endl;
+//   }
+//   // std::cout << "After backward " << std::endl;
+//   // std::cout << "-------------------------------------------------- " << std::endl;
+//   // std::cout << "Model parameters" << std::endl;
+//   // for (auto param: mlp.parameters()){
+//     // std::cout << *param <<std::endl;
+//     // }
+//   // std::cout << "Input x:" <<std::endl;
+//   // for(auto input : x){
+//     // std::cout << *input << std::endl;
+//   // } 
+// // }  // } 
+
+//   }
+// // ERROR: sto topo graph bainoun oi x komvoi kai oxi oi parameters 
+// // EInai san na ipologizw grad ws pros ta x kai oxi ws pros ta w kai b
 //   return 0;
 // }
