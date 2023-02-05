@@ -59,6 +59,11 @@ static std::tuple<std::shared_ptr<Value>,float> loss(vector2d& scores,
   data_loss = data_loss / losses.size();//std::make_shared<Value>(losses.size()); 
   // L2 reguralization
   //**TODO
+  auto alpha = std::make_shared<Value>(1e-4);
+  auto square_sum = std::inner_product(parameters.begin(), parameters.end(),
+    parameters.begin(), std::make_shared<Value>(0.0));
+  auto reg_loss = alpha * square_sum;
+  auto total_loss = data_loss + reg_loss;
 
   // also get accuracy
   float accuracy = 0.0;
@@ -66,7 +71,7 @@ static std::tuple<std::shared_ptr<Value>,float> loss(vector2d& scores,
     accuracy += ((y[i]->data()>0)==(scores[i][0]->data()>0));
   }
   accuracy /= y.size();
-  return std::make_tuple(data_loss, accuracy);
+  return std::make_tuple(total_loss, accuracy);
 }
 
 int main(){
