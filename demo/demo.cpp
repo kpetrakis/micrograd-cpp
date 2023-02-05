@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <numeric>
+#include <algorithm>
 #include "../nn.cpp"
 
 /**
@@ -44,21 +45,34 @@ vector2d forward(MLP& model, vector2d& inputs){
   return scores;
 }
 
-static std::tuple<std::shared_ptr<Value>,float> loss(vector2d& scores, 
+static std::tuple<std::shared_ptr<Value>,float> loss(size_t batch_size,
+                                              MLP& model,
+                                              vector2d& x, 
                                               const std::vector<std::shared_ptr<Value>> y,
                                               const std::vector<std::shared_ptr<Value>>& parameters){
   /**
    * implement the backward pass through the network..
   */
+  //implement batching
+  std::vector<int> indexes(x.size()); // use list??
+  vector2d Xb;
+  std::vector<std::shared_ptr<Value>> yb;
+  std::iota(indexes.begin(), indexes.end(), 0); // indexes = {0,1,2,3...99}
+  std::random_shuffle(indexes.begin(), indexes.end()); // shuffle indexes
+  // create batch
+  for (int i=0; i<batch_size;i++){
+    yb.emplace_back(y[indexes[i]]);
+    Xb.emplace_back(x[indexes[i]]);
+  }
+  vector2d scores = forward(model, Xb);
   std::vector<std::shared_ptr<Value>> losses;
-  for (int i=0; i<y.size(); ++i){
+  for (int i=0; i<yb.size(); ++i){
     // svm "max-margin" loss
-    losses.emplace_back((std::make_shared<Value>(1.0) + (-y[i] * scores[i][0]))->relu());
+    losses.emplace_back((std::make_shared<Value>(1.0) + (-yb[i] * scores[i][0]))->relu());
   }
   std::shared_ptr<Value> data_loss = std::accumulate(losses.begin(), losses.end(), std::make_shared<Value>(0.0));
   data_loss = data_loss / losses.size();//std::make_shared<Value>(losses.size()); 
   // L2 reguralization
-  //**TODO
   auto alpha = std::make_shared<Value>(1e-4);
   auto square_sum = std::inner_product(parameters.begin(), parameters.end(),
     parameters.begin(), std::make_shared<Value>(0.0));
@@ -67,38 +81,32 @@ static std::tuple<std::shared_ptr<Value>,float> loss(vector2d& scores,
 
   // also get accuracy
   float accuracy = 0.0;
-  for (int i=0; i<y.size();i++){
-    accuracy += ((y[i]->data()>0)==(scores[i][0]->data()>0));
+  for (int i=0; i<yb.size();i++){
+    accuracy += ((yb[i]->data()>0)==(scores[i][0]->data()>0));
   }
-  accuracy /= y.size();
+  accuracy /= yb.size();
   return std::make_tuple(total_loss, accuracy);
 }
 
 int main(){
-  // std::array<std::array<float,n_features>, n_samples> x ;
-  // std::array<float, n_samples> y;
-  // std::tuple<
-  //   std::array<std::array<float,n_features>, n_samples>, 
-  //   std::array<float, n_samples>> dataset;
-
   // dataset = read_data("dataset/data", "dataset/labels");
   // x = std::get<0>(dataset);
   // y = std::get<1>(dataset);
   // or
   // auto [x, y] = read_data("dataset/data", "dataset/labels");
   auto [x, y] = make_dataset("dataset/data", "dataset/labels");
-  MLP model = MLP(2,{8,8,1});
-  size_t epochs = 100;
+  MLP model = MLP(2,{16,16,1});
+  size_t batch_size=16;
+  size_t steps = 100; // those are not epochs....I make approximately steps/(x.shape[0]/batch_size) passes through the whole dataset 
   // float learning_rate = 1e-2;
-  for (size_t k=0; k<epochs; k++){
-    vector2d scores = forward(model, x);
-    auto [total_loss, acc] = loss(scores, y, model.parameters());
+  for (size_t k=0; k<steps; k++){
+    auto [total_loss, acc] = loss(batch_size, model, x, y, model.parameters());
     // backward
     model.zero_grad();
     
     total_loss->backward();
     // update (sgd)
-    float learning_rate = 1.0 - 0.9*k/epochs;
+    float learning_rate = 1.0 - 0.9*k/steps;
     for (auto p : model.parameters()){
       p->_data -= learning_rate * p->grad();
     }
